@@ -1,0 +1,34 @@
+version: '3.4'
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "10"
+services:
+  db-loket:
+    image: tenforce/virtuoso
+    environment:
+      SPARQL_UPDATE: "true"
+      DEFAULT_GRAPH: "http://mu.semte.ch/application"
+      BACKUP_PREFIX: virtuoso_backup_191024T0430-
+    volumes:
+      - ./config/db-loket/virtuoso.ini:/data/virtuoso.ini
+      - ./data/db-loket:/data
+  db-gn:
+    image: tenforce/virtuoso
+    environment:
+      SPARQL_UPDATE: "true"
+      DEFAULT_GRAPH: "http://mu.semte.ch/application"
+      BACKUP_PREFIX: virtuoso_backup_191024T0330-
+    volumes:
+      - ./config/db-gn/virtuoso.ini:/data/virtuoso.ini
+      - ./data/db-gn:/data
+  sync:
+    image: ruby
+    volumes:
+      - ./src:/app
+      - ./output:/output
+    working_dir: "/app"
+    command: "ruby /app/app.rb"
