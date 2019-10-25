@@ -196,7 +196,7 @@ PREFIX org: <http://www.w3.org/ns/org#>
               if !mandataris_exists_in_gn(mandataris[:uri])
                 puts "mandataris #{mandataris[:uri]} missing in GN"
                 triples = fetch_full_resource(mandataris[:uri], false)
-                private_graph << triples
+                public_graph << triples
               end
               if !persoon_exists_in_gn(mandataris[:persoon], bestuur[:id])
                 personen = fetch_persoon(mandataris[:persoon])
