@@ -253,7 +253,7 @@ PREFIX org: <http://www.w3.org/ns/org#>
       end
       if private_sensitive_graph.size > 0
         File.open("/output/20191024223800-private-sensitive-mandaten-sync-#{bestuur[:naam].to_s.gsub(/\s/,"_")}-#{bestuur[:id]}.ttl", "a") do |file|
-          file.write private_graph.dump(:ntriples)
+          file.write private_sensitive_graph.dump(:ntriples)
         end
         File.open("/output/20191024223800-private-sensitive-mandaten-sync-#{bestuur[:naam].to_s.gsub(/\s/,"_")}-#{bestuur[:id]}.graph", "a") do |file|
           file.write construct_gn_graph(bestuur[:id])
