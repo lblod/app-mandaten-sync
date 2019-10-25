@@ -236,7 +236,7 @@ PREFIX org: <http://www.w3.org/ns/org#>
           end
         end
       end
-      puts "writing data for #{bestuur[:naam]} #{bestuur[:id]}} (public #{public_graph.size}, private #{private_graph.size})"
+      puts "writing data for #{bestuur[:naam]} #{bestuur[:id]}} (public #{public_graph.size}, private #{private_graph.size}, sensitive #{private_sensitive_graph.size})"
       if public_graph.size > 0
         File.open('/output/20191024223800-public-mandaten-sync.ttl', "a") do |file|
           file.write "# mandaten voor #{bestuur[:naam]} #{bestuur[:id]}\n"
