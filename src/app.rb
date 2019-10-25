@@ -112,12 +112,15 @@ PREFIX org: <http://www.w3.org/ns/org#>
 
   def fetch_persoon(persoon)
     query_loket(%(
-      SELECT DISTINCT ?uri ?id ?identificator WHERE {
+      SELECT DISTINCT ?uri ?id ?identificator ?geboorte WHERE {
         BIND(<#{persoon}> as ?uri)
         ?uri a person:Person;
              mu:uuid ?id.
         OPTIONAL {
            ?uri adms:identifier ?identificator.
+        }
+        OPTIONAL {
+           ?uri <http://data.vlaanderen.be/ns/persoon#heeftGeboorte> ?geboorte.
         }
       }))
   end
@@ -126,19 +129,15 @@ PREFIX org: <http://www.w3.org/ns/org#>
     query_loket(%(
       CONSTRUCT {
      GRAPH #{ public ? "<http://mu.semte.ch/graphs/public>" : "?g"} {
-          ?s ?p ?o
+          ?s ?p ?o.
+          ?foo ?bar ?s.
         }
-          GRAPH #{ public ? "<http://mu.semte.ch/graphs/public>" : "?h"} {
-            ?foo ?bar ?s.
-          }
-        }
+      }
       WHERE {
         BIND(<#{resource}> as ?s)
         GRAPH #{ public ? "<http://mu.semte.ch/graphs/public>" : "?g"} {
-          ?s ?p ?o
-        }
-        OPTIONAL {
-          GRAPH #{ public ? "<http://mu.semte.ch/graphs/public>" : "?h"} {
+          ?s ?p ?o.
+          OPTIONAL {
             ?foo ?bar ?s.
           }
         }
@@ -196,20 +195,33 @@ PREFIX org: <http://www.w3.org/ns/org#>
             fetch_mandatarissen(mandaat[:uri]).each do |mandataris|
               if !mandataris_exists_in_gn(mandataris[:uri])
                 puts "mandataris #{mandataris[:uri]} missing in GN"
-                triples = fetch_full_resource(mandataris[:uri])
-                public_graph << triples
-              end
-              persoon = fetch_persoon(mandataris[:persoon]).first
-              puts "persoon #{persoon[:uri]} missing in GN, eenheid #{bestuur[:id]}"
-              if !persoon_exists_in_gn(persoon[:uri], bestuur[:id])
-                triples = fetch_full_resource(persoon[:uri], false)
+                triples = fetch_full_resource(mandataris[:uri], false)
                 private_graph << triples
-                if persoon[:identificator]
-                  triples = fetch_full_resource(persoon[:identificator], false)
-                  if triples.size > 0
-                    private_graph << triples
-                  else
-                    puts "no identificator found for #{persoon[:uri]}"
+              end
+              if !persoon_exists_in_gn(mandataris[:persoon], bestuur[:id])
+                personen = fetch_persoon(mandataris[:persoon])
+                if (!personen or personen.size != 1)
+                  puts "#{personen.nil? ? personen.size : "no"} persons linked to #{mandataris[:uri]}"
+                else
+                  persoon = personen.first
+                  puts "persoon #{persoon[:uri]} missing in GN"
+                  triples = fetch_full_resource(persoon[:uri], false)
+                  private_graph << triples
+                  if persoon[:identificator]
+                    triples = fetch_full_resource(persoon[:identificator], false)
+                    if triples.size > 0
+                      private_graph << triples
+                    else
+                      puts "no identificator found for #{persoon[:uri]}"
+                    end
+                  end
+                  if persoon[:geboorte]
+                    triples = fetch_full_resource(persoon[:geboorte], false)
+                    if triples.size > 0
+                      private_graph << triples
+                    else
+                      puts "no geboorte found for #{persoon[:uri]}"
+                    end
                   end
                 end
               end
@@ -226,7 +238,7 @@ PREFIX org: <http://www.w3.org/ns/org#>
       end
       if private_graph.size > 0
         File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam]}-#{bestuur[:id]}.ttl", "a") do |file|
-        file.write private_graph.dump(:ntriples)
+          file.write private_graph.dump(:ntriples)
         end
         File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam]}-#{bestuur[:id]}.graph", "a") do |file|
           file.write construct_gn_graph(bestuur[:id])
