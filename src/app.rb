@@ -28,6 +28,24 @@ PREFIX org: <http://www.w3.org/ns/org#>
     @gn.query("#{PREFIXES}\n#{query_string}")
   end
 
+  def wait_for_dbs
+    while !gn_up and !loket_up
+      puts "waiting for endpoints..."
+      sleep 2
+    end
+  end
+  def gn_up
+    @gn.ask.whether([:s,:p,:o]).true?
+  rescue
+    false
+  end
+
+  def loket_up
+    @loket.ask.whether([:s,:p,:o]).true?
+  rescue
+    false
+  end
+
   def query_loket(query_string)
     @loket.query("#{PREFIXES}\n#{query_string}")
   end
@@ -216,10 +234,11 @@ PREFIX org: <http://www.w3.org/ns/org#>
       end
     end
     File.open('/output/20191024223800-public-mandaten-sync.graph', "a") do |file|
-        file.write "http://mu.semte.ch/graphs/public"
+      file.write "http://mu.semte.ch/graphs/public"
     end
   end
 end
 
 syncer = Syncer.new
+syncer.wait_for_dbs
 syncer.sync
