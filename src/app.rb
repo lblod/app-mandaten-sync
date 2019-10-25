@@ -244,10 +244,10 @@ PREFIX org: <http://www.w3.org/ns/org#>
         end
       end
       if private_graph.size > 0
-        File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam]}-#{bestuur[:id]}.ttl", "a") do |file|
+        File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam].to_s.gsub(/\s/,"_")}-#{bestuur[:id]}.ttl", "a") do |file|
           file.write private_graph.dump(:ntriples)
         end
-        File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam]}-#{bestuur[:id]}.graph", "a") do |file|
+        File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam].to_s.gsub(/\s/,"_")}-#{bestuur[:id]}.graph", "a") do |file|
           file.write construct_gn_graph(bestuur[:id])
         end
       end
