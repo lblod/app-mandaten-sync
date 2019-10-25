@@ -174,6 +174,7 @@ PREFIX org: <http://www.w3.org/ns/org#>
     besturen.each do |bestuur|
       public_graph = RDF::Repository.new()
       private_graph = RDF::Repository.new()
+      private_sensitive_graph = RDF::Repository.new()
       puts "checking #{bestuur[:naam]} #{bestuur[:id]}"
       fetch_organen(bestuur[:uri]).each do |orgaan|
         if !orgaan_exists_in_gn(orgaan[:uri])
@@ -206,11 +207,17 @@ PREFIX org: <http://www.w3.org/ns/org#>
                   persoon = personen.first
                   puts "persoon #{persoon[:uri]} missing in GN"
                   triples = fetch_full_resource(persoon[:uri], false)
-                  private_graph << triples
+                  triples.each do |triple|
+                    if triple.predicate.to_s == "http://data.vlaanderen.be/ns/persoon#geslacht"
+                      private_sensitive_graph << triple
+                    else
+                      private_graph << triple
+                    end
+                  end
                   if persoon[:identificator]
                     triples = fetch_full_resource(persoon[:identificator], false)
                     if triples.size > 0
-                      private_graph << triples
+                      private_sensitive_graph << triples
                     else
                       puts "no identificator found for #{persoon[:uri]}"
                     end
@@ -218,9 +225,9 @@ PREFIX org: <http://www.w3.org/ns/org#>
                   if persoon[:geboorte]
                     triples = fetch_full_resource(persoon[:geboorte], false)
                     if triples.size > 0
-                      private_graph << triples
+                      private_sensitive_graph << triples
                     else
-                      puts "no geboorte found for #{persoon[:uri]}"
+                      puts "no geboorte found for #{persoon[:geboorte]}"
                     end
                   end
                 end
@@ -241,6 +248,14 @@ PREFIX org: <http://www.w3.org/ns/org#>
           file.write private_graph.dump(:ntriples)
         end
         File.open("/output/20191024223800-private-mandaten-sync-#{bestuur[:naam]}-#{bestuur[:id]}.graph", "a") do |file|
+          file.write construct_gn_graph(bestuur[:id])
+        end
+      end
+      if private_sensitive_graph.size > 0
+        File.open("/output/20191024223800-private-sensitive-mandaten-sync-#{bestuur[:naam].to_s.gsub(/\s/,"_")}-#{bestuur[:id]}.ttl", "a") do |file|
+          file.write private_graph.dump(:ntriples)
+        end
+        File.open("/output/20191024223800-private-sensitive-mandaten-sync-#{bestuur[:naam].to_s.gsub(/\s/,"_")}-#{bestuur[:id]}.graph", "a") do |file|
           file.write construct_gn_graph(bestuur[:id])
         end
       end
